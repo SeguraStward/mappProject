@@ -10,7 +10,7 @@ public class App extends Application {
     @Override
     public void start(Stage stage) {
       FlowController.getInstance().InitializeFlow(stage, null);
-      FlowController.getInstance().goViewInWindow("principalView");
+      FlowController.getInstance().goViewInWindow("secundaryView");
     }
 
     public static void main(String[] args) {

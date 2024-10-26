@@ -1,75 +1,85 @@
 package cr.ac.una.mapp.controller;
 
 import cr.ac.una.mapp.model.Arista;
+import cr.ac.una.mapp.model.Grafo;
 import cr.ac.una.mapp.model.Vertice;
 import cr.ac.una.mapp.util.AppManager;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Line;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
 
 /**
  * FXML Controller class
  *
  * @author stward segura
  */
-public class PrincipalController extends Controller implements Initializable {
+public class SecundaryController extends Controller implements Initializable {
 
     @FXML
     private AnchorPane root;
     @FXML
     private ImageView mapaImg;
-    private List<Circle> circulos = new ArrayList<>();
-    private Integer click = 0;
-    private Circle origen;
-    private Circle destino;
-    private List<Line> lineas = new ArrayList<>();
     private List<Vertice> vertices = new ArrayList<>();
     private List<Arista> aristas = new ArrayList<>();
-    private int index = 0;
+    private List<Circle> circulos = new ArrayList<>();
+    private List<Line> lineas = new ArrayList<>();
+    private Grafo grafo;
     /**
      * Initializes the controller class.
      */
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        mapaImg.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-
-            colocarCirculo(event.getX(), event.getY());
-        });
+        // TODO
     }
 
     @Override
     public void initialize() {
+        //elimianr lo que haya limpiar todo y despues cargar los nodos
+
+        aristas = AppManager.getInstance().cargar();
+        if (aristas != null && !aristas.isEmpty()) {
+            for (Arista arista : aristas) {
+                arista.getDestino().getRecibidas().add(arista);
+                arista.getDestino().getAristas().add(arista);
+
+                if (!isUniqueVertice(arista.getDestino())) {
+                    vertices.add(arista.getDestino());
+                }
+                if (!isUniqueVertice(arista.getOrigen())) {
+                    vertices.add(arista.getOrigen());
+                }
+                drawLine(arista);
+            }
+        } else {
+            System.out.println("No hay aristas");
+        }
+        if (vertices != null && !vertices.isEmpty()) {
+            for (Vertice vertice : vertices) {
+                colocarCirculo(vertice);
+            }
+        }
+        
+        
+        grafo.setVertices(vertices);
+        
     }
 
-    private void colocarCirculo(double x, double y) {
-        index++;
-        Circle circle = new Circle(x, y, 5);
-        circle.setFill(Color.RED);
-        circle.setStroke(Color.BLACK);
-        Vertice vertice = new Vertice();
-        vertice.setId(index);
-        vertice.setX(x);
-        vertice.setY(y);
-        vertices.add(vertice);
+    private void colocarCirculo(Vertice vertice) {
+         
+        Circle circle = new Circle(vertice.getX(), vertice.getY(), 5);
+        circle.setFill(Color.ALICEBLUE);
+        circle.setStroke(Color.AQUA);
+
         circle.setUserData(vertice);
         circulos.add(circle);
         System.out.println("se creo un circulo");
@@ -78,8 +88,11 @@ public class PrincipalController extends Controller implements Initializable {
 
         circle.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
-                crearVinculo(circle, e);
-
+               //seleccionar nodo A y B para la ruta una vez seleccionados empezar ruta segun ruta elegida
+               //al seleccionar dos se debe pintar la ruta 
+               //e iniciar la animacion
+               //cuando se inicia la animacion y llega a un nodo entonces se recalcula la ruta y si da otra entonces marcarla con otro color
+               //en el grafo y mostrarla
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 //change color and other things maybe
             }
@@ -94,7 +107,7 @@ public class PrincipalController extends Controller implements Initializable {
     }
 
     private void drawLine(Arista arista) {
-        setDistanciaVentana(arista);
+
         double offset = 10;
 
         double startX = arista.getOrigen().getX();
@@ -110,21 +123,25 @@ public class PrincipalController extends Controller implements Initializable {
         double scaleY = (deltaY / length) * offset;
 
         Line line = new Line(startX + scaleX, startY + scaleY, endX - scaleX, endY - scaleY);
-        line.setStroke(Color.TRANSPARENT);
 
+        line.setStroke(Color.TRANSPARENT);
         line.setStrokeWidth(2);
         line.setUserData(arista);
         Circle origenCircle = obtenerCirculoDesdeVertice(arista.getOrigen());
         Circle destinoCircle = obtenerCirculoDesdeVertice(arista.getDestino());
 
-        line.setOnMouseClicked(event -> {
+        line.setOnMouseClicked(event -> {//linea seleccionada
+            //efecto hover
 
             efectoDeLinea(line, origenCircle, destinoCircle, event);
 
             //ventana para agregar accidentes,inhabilitar la arista, cantidad de transito, y mas
             //configurar la linea puede ser
         });
+        //efectos para hover en la linea
         line.setOnMouseEntered(e -> {
+            line.setStrokeWidth(3);
+
             if (origenCircle != null) {
                 origenCircle.setRadius(7);
             }
@@ -132,7 +149,10 @@ public class PrincipalController extends Controller implements Initializable {
                 destinoCircle.setRadius(7);
             }
         });
+        //efectos hover
         line.setOnMouseExited(e -> {
+            line.setStrokeWidth(2);
+
             if (origenCircle != null) {
                 origenCircle.setRadius(5);
             }
@@ -143,52 +163,6 @@ public class PrincipalController extends Controller implements Initializable {
         lineas.add(line);
         drawArrow(line);
         root.getChildren().add(line);
-    }
-
-    private void circleInfo(Circle cir) {
-        Vertice ver = (Vertice) cir.getUserData();
-        int i = 0;
-        for (Arista arista : ver.getAristas()) {
-            System.out.println("arista" + Integer.toString(++i));
-        }
-    }
-
-    private void crearVinculo(Circle circle, MouseEvent e) {
-        circleInfo(circle);
-        if (click == 0) {
-            click++;
-            origen = circle;
-            System.out.println("origen");
-        } else if (click == 1) {
-
-            destino = circle;
-            if (origen != destino) {
-                click++;
-            }
-
-            System.out.println("destino");
-
-        }
-
-        if (click == 2) {
-
-            //agregar la arista y la linea en pantalla
-            Arista arista = new Arista();
-            Vertice origenV = (Vertice) origen.getUserData();
-            Vertice destinoV = (Vertice) destino.getUserData();
-            origenV.getAristas().add(arista);//agregando a la lista de aristas del vertice
-            destinoV.getRecibidas().add(arista);
-            arista.setDestino(destinoV);
-            arista.setOrigen(origenV);
-            aristas.add(arista);
-            drawLine(arista);
-            origen = null;
-            destino = null;
-            click = 0;
-
-        }
-
-        e.consume();
     }
 
     private Circle obtenerCirculoDesdeVertice(Vertice vertice) {
@@ -210,7 +184,7 @@ public class PrincipalController extends Controller implements Initializable {
             if (destinoCircle != null) {
                 destinoCircle.setRadius(7);
             }
-
+            //seleccionada hacer algo para agreagar accidentes o demas
             line.setStroke(Color.RED);
         } else if (event.getButton() == MouseButton.SECONDARY) {
 
@@ -225,92 +199,29 @@ public class PrincipalController extends Controller implements Initializable {
         }
     }
 
-    public void setDistanciaVentana(Arista arista) {
-
-        Stage ventana = new Stage();
-        ventana.initModality(Modality.APPLICATION_MODAL);
-        ventana.setTitle("Ingresar Longitud");
-
-        Label label = new Label("Ingrese la longitud de la ruta (en metros):");
-
-        TextField textField = new TextField();
-        textField.setPromptText("Longitud en metros");
-        Label errorLabel = new Label();
-        errorLabel.setStyle("-fx-text-fill: red;");
-        Button confirmarButton = new Button("Confirmar");
-        textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.matches("\\d*")) {
-                textField.setText(newValue.replaceAll("[^\\d]", ""));
-            }
-        });
-        confirmarButton.setOnAction(event -> {
-            String textoIngresado = textField.getText();
-            try {
-
-                Integer longitud = Integer.valueOf(textoIngresado);
-
-                if (longitud <= 0) {
-                    throw new NumberFormatException("La longitud debe ser mayor que cero.");
-                }
-
-                arista.setLongitud(longitud);
-
-                ventana.close();
-            } catch (NumberFormatException e) {
-
-                errorLabel.setText("Por favor ingrese un número válido y positivo.");
-            }
-        });
-
-        VBox vbox = new VBox(10, label, textField, confirmarButton, errorLabel);
-        vbox.setAlignment(Pos.CENTER);
-
-        Scene scene = new Scene(vbox, 300, 200);
-        ventana.setScene(scene);
-        ventana.setOnCloseRequest(event -> {
-            event.consume();
-            errorLabel.setText("Debe ingresar un valor válido para continuar.");
-        });
-
-        ventana.showAndWait();
-    }
-
-    @FXML
-    private void guardarAction(ActionEvent event) {
-
-        AppManager.guardar(aristas);
-        System.out.println("Guardado exitoso");
-    }
-
-    @FXML
-    private void cargarAction(ActionEvent event) {
-
-        //  root.getChildren().removeIf(nodo -> nodo instanceof Line || nodo instanceof Circle); 
-    }
-
-    private void drawArrow(Line line) {
-        // Coordenadas de la línea
+   private void drawArrow(Line line) {
+        
         double startX = line.getStartX();
         double startY = line.getStartY();
         double endX = line.getEndX();
         double endY = line.getEndY();
 
-        // Vector de la línea
+       
         double deltaX = endX - startX;
         double deltaY = endY - startY;
         double angle = Math.atan2(deltaY, deltaX);
 
-        // Tamaño de la flecha
+        
         double arrowLength = 10;
         double arrowWidth = 2;
 
-        // Calcula las posiciones de las puntas de la flecha
+        
         double x1 = endX - arrowLength * Math.cos(angle - Math.PI / 6);
         double y1 = endY - arrowLength * Math.sin(angle - Math.PI / 6);
         double x2 = endX - arrowLength * Math.cos(angle + Math.PI / 6);
         double y2 = endY - arrowLength * Math.sin(angle + Math.PI / 6);
 
-        // Dibuja las dos líneas de la flecha
+        
         Line arrow1 = new Line(endX, endY, x1, y1);
         Line arrow2 = new Line(endX, endY, x2, y2);
         arrow1.setStrokeWidth(arrowWidth);
@@ -360,4 +271,16 @@ public class PrincipalController extends Controller implements Initializable {
         });
         root.getChildren().addAll(arrow1, arrow2);
     }
+
+    public boolean isUniqueVertice(Vertice vertice) {
+        if (vertices != null && !vertices.isEmpty()) {
+            for (Vertice aux : vertices) {
+                if (aux.getX() == vertice.getX() && aux.getY() == vertice.getY()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 }

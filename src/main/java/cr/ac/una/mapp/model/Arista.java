@@ -1,34 +1,59 @@
 package cr.ac.una.mapp.model;
 
+import com.google.gson.annotations.Expose;
+
 /**
  *
  * @author stward segura
  */
-public class Arista {
-    
-    private Vertice origen;
-    private Vertice destino;
+public class Arista { 
+    @Expose
+    private Vertice origen; // Origen de la arista
+    @Expose
+    private Vertice destino; // Destino de la arista
+    @Expose
     private Integer peso;
-    private Boolean disponibilidad;
-    private Boolean dosDirecciones;
+    @Expose
+    private Boolean isClosed;
+    @Expose
+    private Integer time;
+    @Expose
+    private Integer longitud;
     public Arista() {
         this.origen = null;
         this.destino = null;
         this.peso = 0;
-        this.disponibilidad = true;
-        this.dosDirecciones = false;
-    }
-
-    public Boolean getDosDirecciones() {
-        return dosDirecciones;
-    }
-
-    public void setDosDirecciones(Boolean dosDirecciones) {
-        this.dosDirecciones = dosDirecciones;
-    }
-
+        this.time = 0;
+        this.isClosed = true;
+        this.longitud = 0;
+        
+    } 
     public Vertice getOrigen() {
         return origen;
+    }
+
+    public Boolean getIsClosed() {
+        return isClosed;
+    }
+
+    public void setIsClosed(Boolean isClosed) {
+        this.isClosed = isClosed;
+    }
+
+    public Integer getLongitud() {
+        return longitud;
+    }
+
+    public void setLongitud(Integer longitud) {
+        this.longitud = longitud;
+    }
+
+    public Integer getTime() {
+        return time;
+    }
+
+    public void setTime(Integer time) {
+        this.time = time;
     }
 
     public void setOrigen(Vertice origen) {
@@ -52,11 +77,11 @@ public class Arista {
     }
 
     public Boolean getDisponibilidad() {
-        return disponibilidad;
+        return isClosed;
     }
 
     public void setDisponibilidad(Boolean disponibilidad) {
-        this.disponibilidad = disponibilidad;
+        this.isClosed = disponibilidad;
     }
     
 }

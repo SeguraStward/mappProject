@@ -1,0 +1,18 @@
+[
+  {
+    "origen": {
+      "id": 0,
+      "x": 406.0,
+      "y": 396.0
+    },
+    "destino": {
+      "id": 0,
+      "x": 360.0,
+      "y": 240.0
+    },
+    "peso": 0,
+    "isClosed": true,
+    "time": 0,
+    "longitud": 323
+  }
+]
