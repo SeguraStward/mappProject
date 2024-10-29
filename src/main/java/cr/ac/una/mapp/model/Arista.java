@@ -19,6 +19,8 @@ public class Arista {
     private Integer time;
     @Expose
     private Integer longitud;
+    @Expose
+    private Integer nivelTrafico;
     public Arista() {
         this.origen = null;
         this.destino = null;
@@ -26,6 +28,7 @@ public class Arista {
         this.time = 0;
         this.isClosed = true;
         this.longitud = 0;
+        this.nivelTrafico = 1;
         
     } 
     public Vertice getOrigen() {
@@ -34,6 +37,14 @@ public class Arista {
 
     public Boolean getIsClosed() {
         return isClosed;
+    }
+
+    public Integer getNivelTrafico() {
+        return nivelTrafico;
+    }
+
+    public void setNivelTrafico(Integer nivelTrafico) {
+        this.nivelTrafico = nivelTrafico;
     }
 
     public void setIsClosed(Boolean isClosed) {

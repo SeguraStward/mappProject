@@ -11,6 +11,7 @@ public class App extends Application {
     public void start(Stage stage) {
       FlowController.getInstance().InitializeFlow(stage, null);
       FlowController.getInstance().goViewInWindow("secundaryView");
+ 
     }
 
     public static void main(String[] args) {

@@ -16,6 +16,9 @@ public class Grafo {
         this.matrizPesos = crearMatrizPesos();
         this.predecesores = new int[vertices.size()][vertices.size()];
     }
+    public Grafo(){
+    
+    }
 
     public List<Vertice> getVertices() {
         return vertices;

@@ -1,6 +1,7 @@
 package cr.ac.una.mapp.controller;
 
 import cr.ac.una.mapp.model.Arista;
+import cr.ac.una.mapp.model.Grafo;
 import cr.ac.una.mapp.model.Vertice;
 import cr.ac.una.mapp.util.AppManager;
 import java.net.URL;
@@ -45,6 +46,7 @@ public class PrincipalController extends Controller implements Initializable {
     private List<Vertice> vertices = new ArrayList<>();
     private List<Arista> aristas = new ArrayList<>();
     private int index = 0;
+
     /**
      * Initializes the controller class.
      */
@@ -58,11 +60,12 @@ public class PrincipalController extends Controller implements Initializable {
 
     @Override
     public void initialize() {
+
     }
 
     private void colocarCirculo(double x, double y) {
         index++;
-        Circle circle = new Circle(x, y, 5);
+        Circle circle = new Circle(x, y, 3);
         circle.setFill(Color.RED);
         circle.setStroke(Color.BLACK);
         Vertice vertice = new Vertice();
@@ -82,6 +85,11 @@ public class PrincipalController extends Controller implements Initializable {
 
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 //change color and other things maybe
+                root.getChildren().remove(circle);
+
+                // Remover el círculo de la lista
+                vertices.remove(circle.getUserData());
+                circulos.remove(circle);
             }
         });
         circle.setOnMouseEntered(e -> {
@@ -89,7 +97,7 @@ public class PrincipalController extends Controller implements Initializable {
         });
 
         circle.setOnMouseExited(e -> {
-            circle.setRadius(5);
+            circle.setRadius(3);
         });
     }
 
@@ -121,6 +129,16 @@ public class PrincipalController extends Controller implements Initializable {
 
             efectoDeLinea(line, origenCircle, destinoCircle, event);
 
+            if (event.getButton() == MouseButton.PRIMARY) {
+
+            } else if (event.getButton() == MouseButton.SECONDARY) {
+                //change color and other things maybe
+                root.getChildren().remove(line);
+
+                // Remover el círculo de la lista
+                aristas.remove(line.getUserData());
+                lineas.remove(line);
+            }
             //ventana para agregar accidentes,inhabilitar la arista, cantidad de transito, y mas
             //configurar la linea puede ser
         });
@@ -134,10 +152,10 @@ public class PrincipalController extends Controller implements Initializable {
         });
         line.setOnMouseExited(e -> {
             if (origenCircle != null) {
-                origenCircle.setRadius(5);
+                origenCircle.setRadius(3);
             }
             if (destinoCircle != null) {
-                destinoCircle.setRadius(5);
+                destinoCircle.setRadius(3);
             }
         });
         lineas.add(line);
@@ -316,48 +334,81 @@ public class PrincipalController extends Controller implements Initializable {
         arrow1.setStrokeWidth(arrowWidth);
         arrow2.setStrokeWidth(arrowWidth);
         arrow1.setStroke(Color.BLACK);
-        arrow2.setStroke(Color.BLACK); 
-        
-        arrow1.setOnMouseClicked(event -> { 
+        arrow2.setStroke(Color.BLACK);
+
+        arrow1.setOnMouseClicked(event -> {
             //ventana para agregar accidentes,inhabilitar la arista, cantidad de transito, y mas
             //configurar la linea puede ser
+             if (event.getButton() == MouseButton.PRIMARY) {
+
+            } else if (event.getButton() == MouseButton.SECONDARY) {
+                //change color and other things maybe
+                root.getChildren().remove(line);
+                root.getChildren().remove(arrow1);
+                root.getChildren().remove(arrow2);
+                // Remover el círculo de la lista
+                aristas.remove(line.getUserData());
+                lineas.remove(line);
+            }
         });
-        arrow2.setOnMouseClicked(event -> { 
+        arrow2.setOnMouseClicked(event -> {
             //ventana para agregar accidentes,inhabilitar la arista, cantidad de transito, y mas
             //configurar la linea puede ser
-        }); 
+             if (event.getButton() == MouseButton.PRIMARY) {
+
+            } else if (event.getButton() == MouseButton.SECONDARY) {
+                //change color and other things maybe
+                root.getChildren().remove(line);
+                root.getChildren().remove(arrow1);
+                root.getChildren().remove(arrow2);
+                // Remover el círculo de la lista
+                aristas.remove(line.getUserData());
+                lineas.remove(line);
+            }
+        });
         arrow1.setOnMouseEntered(e -> {
             line.setStroke(Color.RED);
             line.setStrokeWidth(3);
             arrow1.setStroke(Color.RED);
             arrow2.setStroke(Color.RED);
             arrow1.setStrokeWidth(4);
-            arrow2.setStrokeWidth(4); 
-        }); 
+            arrow2.setStrokeWidth(4);
+        });
         arrow2.setOnMouseEntered(e -> {
             line.setStrokeWidth(3);
             line.setStroke(Color.RED);
             arrow1.setStroke(Color.RED);
             arrow2.setStroke(Color.RED);
             arrow1.setStrokeWidth(4);
-            arrow2.setStrokeWidth(4); 
-        }); 
+            arrow2.setStrokeWidth(4);
+        });
         arrow1.setOnMouseExited(e -> {
             line.setStroke(Color.TRANSPARENT);
             line.setStrokeWidth(2);
             arrow1.setStroke(Color.BLACK);
             arrow2.setStroke(Color.BLACK);
             arrow1.setStrokeWidth(3);
-            arrow2.setStrokeWidth(3); 
-        }); 
+            arrow2.setStrokeWidth(3);
+        });
         arrow2.setOnMouseExited(e -> {
             line.setStroke(Color.TRANSPARENT);
             line.setStrokeWidth(2);
             arrow1.setStroke(Color.BLACK);
             arrow2.setStroke(Color.BLACK);
             arrow1.setStrokeWidth(3);
-            arrow2.setStrokeWidth(3); 
+            arrow2.setStrokeWidth(3);
         });
         root.getChildren().addAll(arrow1, arrow2);
+    }
+
+    public boolean isUniqueVertice(Vertice vertice) {
+        if (vertices != null && !vertices.isEmpty()) {
+            for (Vertice aux : vertices) {
+                if (aux.getX() == vertice.getX() && aux.getY() == vertice.getY()) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }
