@@ -1,6 +1,6 @@
 package cr.ac.una.mapp.controller;
 
-import cr.ac.una.mapp.model.Arista;
+import cr.ac.una.mapp.model.Arista; 
 import cr.ac.una.mapp.model.Grafo;
 import cr.ac.una.mapp.model.Vertice;
 import cr.ac.una.mapp.util.AppManager;
@@ -22,7 +22,6 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.Spinner;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -47,11 +46,13 @@ public class SecundaryController extends Controller implements Initializable {
     private List<Arista> aristas = new ArrayList<>();
     private List<Circle> circulos = new ArrayList<>();
     private List<Line> lineas = new ArrayList<>();
-    private Grafo grafo = new Grafo();
+    private Grafo grafo;
     private Vertice origen;
     private Line lineaAnterior;
     private Line arrowA;
     private Line arrowB;
+    private Vertice destino;
+    private Integer click = 0;
 
     /**
      * Initializes the controller class.
@@ -68,26 +69,27 @@ public class SecundaryController extends Controller implements Initializable {
         aristas = AppManager.getInstance().cargar();
         if (aristas != null && !aristas.isEmpty()) {
             for (Arista arista : aristas) {
-               // Asignar la arista al destino en la lista de "recibidas"
-               Vertice destino = verticeExistente(arista.getDestino());
-               
-               if(destino == null){
-                   vertices.add(arista.getDestino());
-                   arista.getDestino().getRecibidas().add(arista);
-               }else{
-                   destino.getRecibidas().add(arista);
-               }
-               Vertice origen = verticeExistente(arista.getOrigen());
-               
-               if(origen == null){
-                   vertices.add(arista.getOrigen());
-                   arista.getOrigen().getAristas().add(arista);
-               }else{
-                   origen.getAristas().add(arista);
-               }
- 
-            // Dibujar la línea que representa la arista
-            drawLine(arista);
+                // Asignar la arista al destino en la lista de "recibidas"
+                Vertice destino1 = verticeExistente(arista.getDestino());
+                arista.setPeso(arista.getLongitud() * arista.getNivelTrafico());
+                arista.setIsClosed(Boolean.FALSE);
+                if (destino1 == null) {
+                    vertices.add(arista.getDestino());
+                    arista.getDestino().getRecibidas().add(arista);
+                } else {
+                    destino1.getRecibidas().add(arista);
+                }
+                Vertice origen1 = verticeExistente(arista.getOrigen());
+
+                if (origen1 == null) {
+                    vertices.add(arista.getOrigen());
+                    arista.getOrigen().getAristas().add(arista);
+                } else {
+                    origen1.getAristas().add(arista);
+                }
+
+                // Dibujar la línea que representa la arista
+                drawLine(arista);
             }
         } else {
             System.out.println("No hay aristas");
@@ -96,10 +98,10 @@ public class SecundaryController extends Controller implements Initializable {
             for (Vertice vertice : vertices) {
                 colocarCirculo(vertice);
             }
-            this.grafo = new Grafo(vertices);
+            this.grafo = new Grafo(aristas);
+            this.grafo.mostrarMatrizAdyacencia();
         }
-
-        grafo.setVertices(vertices);
+ 
 
     }
 
@@ -122,6 +124,24 @@ public class SecundaryController extends Controller implements Initializable {
                 //e iniciar la animacion
                 //cuando se inicia la animacion y llega a un nodo entonces se recalcula la ruta y si da otra entonces marcarla con otro color
                 //en el grafo y mostrarla
+                System.out.println("click en circulo");
+                if (click == 0) {
+                    origen = (Vertice) circle.getUserData();
+                    click++;
+
+                } else if (click == 1 && origen != (Vertice) circle.getUserData()) {
+                    destino = (Vertice) circle.getUserData();
+                    click = 0;
+                   List<Vertice> camino = grafo.dijkstra(origen.getId(), destino.getId());
+                    drawPath(camino);
+                    for(Vertice c : camino){
+                     System.out.println(c.getId() + " ");
+                    }
+                  
+                    //calcular ruta y dibujarla
+                    //ventana de empezar recorrido elegir algoritmo y mas 
+                    //animacion
+                }
 
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 //change color and other things maybe
@@ -158,7 +178,7 @@ public class SecundaryController extends Controller implements Initializable {
         line.setStroke(Color.CADETBLUE);
         line.setStrokeWidth(2);
         line.setUserData(arista);
-         
+
         lineas.add(line);
         drawArrow(line);
         root.getChildren().add(line);
@@ -197,7 +217,6 @@ public class SecundaryController extends Controller implements Initializable {
 //            line.setStroke(Color.BLACK);
 //        }
 //    }
-
     private void drawArrow(Line line) {
         if (lineaAnterior != null) {
             lineaAnterior.setStroke(Color.TRANSPARENT); // Volver a color original
@@ -229,73 +248,20 @@ public class SecundaryController extends Controller implements Initializable {
         arrow2.setStrokeWidth(arrowWidth);
         arrow1.setStroke(Color.CADETBLUE);
         arrow2.setStroke(Color.CADETBLUE);
- 
+
         lineaAnterior = line;
         arrowA = arrow1;
         arrowB = arrow2;
         root.getChildren().addAll(arrow1, arrow2);
     }
 
-    public Vertice verticeExistente(Vertice vertice) {
-        if (vertices != null && !vertices.isEmpty()) {
-            for (Vertice aux : vertices) {
-                if (aux.getX() == vertice.getX() && aux.getY() == vertice.getY()) {
-                    return aux;
-                }
+    private Vertice verticeExistente(Vertice verticeBuscado) {
+        for (Vertice v : vertices) {
+            if (v.equals(verticeBuscado)) { // Suponiendo que equals está correctamente sobrecargado
+                return v;
             }
         }
         return null;
-    }
-
-    private void showAristaConfigWindow(Arista arista) {
-        Stage stage = new Stage();
-        stage.setTitle("Configurar Arista");
-
-        // VBox para centrar los elementos y organizar verticalmente
-        VBox vbox = new VBox(15);
-        vbox.setPadding(new Insets(20, 20, 20, 20));
-        vbox.setAlignment(Pos.CENTER);
-
-        Label labelTrafico = new Label("Nivel de tráfico (1-3):");
-        Spinner<Integer> spinnerTrafico = new Spinner<>(1, 3, arista.getNivelTrafico());
-        spinnerTrafico.setEditable(false);
-
-        // Etiqueta y checkbox para indicar si la calle está cerrada
-        Label cerrado = new Label("Calle cerrada:");
-        CheckBox checkBoxCerrado = new CheckBox();
-        checkBoxCerrado.setSelected(arista.getIsClosed());
-
-        Label accidente = new Label("Calle Accidente:");
-        CheckBox checkBox2 = new CheckBox();
-        checkBox2.setSelected(arista.getIsClosed());
-
-        Button botonGuardar = new Button("Guardar");
-
-        // Añadir listeners para actualizar la arista
-        spinnerTrafico.valueProperty().addListener((observable, oldValue, newValue) -> {
-            arista.setNivelTrafico(newValue);
-        });
-
-        checkBoxCerrado.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            arista.setIsClosed(newValue);
-        });
-        checkBox2.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            arista.setIsClosed(newValue);
-        });
-
-        // Acción al hacer clic en el botón "Guardar"
-        botonGuardar.setOnAction(event -> {
-            System.out.println("Arista configurada: " + arista);
-            stage.close(); // Cerrar la ventana
-        });
-
-        // Agregar elementos al VBox en orden
-        vbox.getChildren().addAll(labelTrafico, spinnerTrafico, cerrado, checkBoxCerrado, accidente, checkBox2, botonGuardar);
-
-        Scene scene = new Scene(vbox, 300, 250);
-        stage.setScene(scene);
-        stage.setResizable(false);
-        stage.show();
     }
 
     public void animarMovimiento(Vertice destino) {
@@ -357,7 +323,7 @@ public class SecundaryController extends Controller implements Initializable {
                 // Actualizar valores de los controles con los valores de la arista seleccionada
                 checkBoxCerrado.setSelected(nuevaRuta.getIsClosed());
                 spinnerTrafico.getValueFactory().setValue(nuevaRuta.getNivelTrafico());
-
+                nuevaRuta.setPeso(nuevaRuta.getLongitud() * nuevaRuta.getNivelTrafico());
                 // Resaltar ruta seleccionada en la ventana principal
                 drawLine(nuevaRuta);
             }
@@ -376,6 +342,7 @@ public class SecundaryController extends Controller implements Initializable {
             Arista seleccionada = listaRutas.getSelectionModel().getSelectedItem();
             if (seleccionada != null) {
                 seleccionada.setNivelTrafico(newValue);
+                seleccionada.setPeso(seleccionada.getLongitud() * seleccionada.getNivelTrafico());
             }
         });
 
@@ -390,6 +357,32 @@ public class SecundaryController extends Controller implements Initializable {
         Scene scene = new Scene(vbox, 300, 400);
         stage.setScene(scene);
         stage.show();
+    }
+
+    public void drawPath(List<Vertice> vertices) {
+
+        clearPath();
+        for (int i = 0; i < vertices.size() - 1; i++) {
+            Vertice origen1 = vertices.get(i);
+            Vertice destino2 = vertices.get(i + 1);
+
+            Line line = new Line();
+            line.setStartX(origen1.getX());
+            line.setStartY(origen1.getY());
+            line.setEndX(destino2.getX());
+            line.setEndY(destino2.getY());
+            line.setStroke(Color.BLUE);
+
+            root.getChildren().add(line);
+            lineas.add(line);
+        }
+    }
+
+    public void clearPath() {
+        for (Line line : lineas) {
+            root.getChildren().remove(line);
+        }
+        lineas.clear();
     }
 
 }

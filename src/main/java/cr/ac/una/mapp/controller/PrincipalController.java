@@ -1,7 +1,7 @@
 package cr.ac.una.mapp.controller;
 
 import cr.ac.una.mapp.model.Arista;
-import cr.ac.una.mapp.model.Grafo;
+ 
 import cr.ac.una.mapp.model.Vertice;
 import cr.ac.una.mapp.util.AppManager;
 import java.net.URL;

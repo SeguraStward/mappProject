@@ -7,147 +7,103 @@ package cr.ac.una.mapp.model;
 import java.util.*;
 
 public class Grafo {
+
     private List<Vertice> vertices;
-    private int[][] matrizPesos; 
-    private int[][] predecesores;  
+    private List<List<Integer>> matrix;  // Usamos ArrayList para la matriz de adyacencia
 
-    public Grafo(List<Vertice> vertices) {
-        this.vertices = vertices;
-        this.matrizPesos = crearMatrizPesos();
-        this.predecesores = new int[vertices.size()][vertices.size()];
-    }
-    public Grafo(){
-    
-    }
+    public Grafo(List<Arista> aristas) {
+        // Obtener lista de vértices únicos
+        this.vertices = obtenerVerticesUnicos(aristas);
 
-    public List<Vertice> getVertices() {
-        return vertices;
-    }
+        // Crear la matriz de adyacencia con tamaño igual al número de vértices
+        int numVertices = vertices.size();
+        numVertices += 10;
+        System.out.println("size vertices:" + vertices.size() +"numvertices:" + numVertices);
+        matrix = new ArrayList<>(numVertices );
 
-    public void setVertices(List<Vertice> vertices) {
-        this.vertices = vertices;
-        this.matrizPesos = crearMatrizPesos();
-    }
-    
-     
-    private int[][] crearMatrizPesos() {
-        int n = vertices.size();
-        int[][] matrizPesos = new int[n][n];
-        
-        
-        for (int i = 0; i < n; i++) {
-            Arrays.fill(matrizPesos[i], Integer.MAX_VALUE);
-            matrizPesos[i][i] = 0; // Distancia a sí mismo es 0
+        // Inicializar la matriz con ArrayLists
+        for (int i = 0; i < numVertices; i++) {
+            matrix.add(new ArrayList<>(Collections.nCopies(numVertices, Integer.MAX_VALUE)));  // Rellenamos con Integer.MAX_VALUE
         }
-        
-        // Rellenar matriz con pesos de las aristas
-        for (int i = 0; i < n; i++) {
-            Vertice vertice = vertices.get(i);
-            for (Arista arista : vertice.getAristas()) {
-                int j = vertices.indexOf(arista.getDestino());
-                if (!arista.getIsClosed()) {
-                    matrizPesos[i][j] = arista.getPeso();
+
+        for (Arista arista : aristas) {
+            int origenIndex = arista.getOrigen().getId();
+            int destinoIndex = arista.getDestino().getId();
+
+            matrix.get(origenIndex).set(destinoIndex, arista.getPeso());
+        }
+    }
+
+    private List<Vertice> obtenerVerticesUnicos(List<Arista> aristas) {
+        Set<Vertice> verticesSet = new HashSet<>();
+        for (Arista arista : aristas) {
+            verticesSet.add(arista.getOrigen());
+            verticesSet.add(arista.getDestino());
+        }
+        return new ArrayList<>(verticesSet);
+    }
+
+    public void mostrarMatrizAdyacencia() {
+        System.out.println("Matriz de Adyacencia:");
+        for (List<Integer> fila : matrix) {
+            for (Integer valor : fila) {
+                if (valor == Integer.MAX_VALUE) {
+                    System.out.print("∞ ");
+                } else {
+                    System.out.print(valor + " ");
                 }
             }
+            System.out.println();
         }
-        return matrizPesos;
     }
+    
+     public List<Vertice> dijkstra(int origenId, int destinoId) {
+      
+        int numVertices = vertices.size();
+           numVertices += 10;
+        // Distancias mínimas desde el origen
+        int[] distancias = new int[numVertices];
+        Arrays.fill(distancias, Integer.MAX_VALUE);
+        distancias[origenId] = 0;
 
-    // Implementación de Dijkstra que retorna la lista de vértices del camino más corto
-    public List<Vertice> dijkstra(int inicio, int fin) {
-        int n = vertices.size();
-        int[] dist = new int[n];
-        int[] prev = new int[n];
-        Arrays.fill(dist, Integer.MAX_VALUE);
-        Arrays.fill(prev, -1);
-        dist[inicio] = 0;
+        // Predecesores para reconstruir el camino
+        int[] predecesores = new int[numVertices];
+        Arrays.fill(predecesores, -1);
 
-        PriorityQueue<Integer> pq = new PriorityQueue<>(Comparator.comparingInt(i -> dist[i]));
-        pq.add(inicio);
+        // Min-heap para seleccionar el vértice con la distancia mínima
+        PriorityQueue<Integer> pq = new PriorityQueue<>(Comparator.comparingInt(v -> distancias[v]));
+        pq.add(origenId);
 
         while (!pq.isEmpty()) {
-            int u = pq.poll();
-            if (u == fin) break;
+            int actual = pq.poll();
 
-            for (int v = 0; v < n; v++) {
-                if (matrizPesos[u][v] != Integer.MAX_VALUE) {
-                    int nuevoDist = dist[u] + matrizPesos[u][v];
-                    if (nuevoDist < dist[v]) {
-                        dist[v] = nuevoDist;
-                        prev[v] = u;
-                        pq.add(v);
+            // Si llegamos al destino, reconstruimos el camino
+            if (actual == destinoId) {
+                return reconstruirCamino(predecesores, origenId, destinoId);
+            }
+
+            // Recorremos los vecinos del vértice actual
+            for (int vecino = 0; vecino < numVertices; vecino++) {
+                if (matrix.get(actual).get(vecino) != Integer.MAX_VALUE) {
+                    int nuevoDistancia = distancias[actual] + matrix.get(actual).get(vecino);
+                    if (nuevoDistancia < distancias[vecino]) {
+                        distancias[vecino] = nuevoDistancia;
+                        predecesores[vecino] = actual;
+                        pq.add(vecino);
                     }
                 }
             }
         }
 
-        // Reconstruir el camino
-        List<Vertice> path = new ArrayList<>();
-        for (int at = fin; at != -1; at = prev[at]) {
-            path.add(vertices.get(at));
+        return new ArrayList<>();  // Si no hay camino
+    }
+     private List<Vertice> reconstruirCamino(int[] predecesores, int origen, int destino) {
+        List<Vertice> camino = new ArrayList<>();
+        for (int at = destino; at != -1; at = predecesores[at]) {
+            camino.add(vertices.get(at));
         }
-        Collections.reverse(path);
-        
-        if (path.get(0) != vertices.get(inicio)) {
-            return Collections.emptyList(); // No hay ruta si el primer nodo no es el inicio
-        }
-        
-        return path;
+        Collections.reverse(camino);
+        return camino;
     }
 
-    // Implementación de Floyd-Warshall que retorna la lista de vértices del camino más corto
-    public List<Vertice> floydWarshall(int inicio, int fin) {
-        int n = vertices.size();
-        int[][] dist = new int[n][n];
-        this.predecesores = new int[n][n];
-        
-        // Inicializar matrices de distancias y predecesores
-        for (int i = 0; i < n; i++) {
-            Arrays.fill(dist[i], Integer.MAX_VALUE);
-            Arrays.fill(predecesores[i], -1);
-            dist[i][i] = 0;
-        }
-
-        // Configurar distancias y predecesores iniciales
-        for (int i = 0; i < n; i++) {
-            Vertice vertice = vertices.get(i);
-            for (Arista arista : vertice.getAristas()) {
-                int j = vertices.indexOf(arista.getDestino());
-                if (!arista.getIsClosed()) {
-                    dist[i][j] = arista.getPeso();
-                    predecesores[i][j] = i;
-                }
-            }
-        }
-
-        // Algoritmo de Floyd-Warshall
-        for (int k = 0; k < n; k++) {
-            for (int i = 0; i < n; i++) {
-                for (int j = 0; j < n; j++) {
-                    if (dist[i][k] != Integer.MAX_VALUE && dist[k][j] != Integer.MAX_VALUE) {
-                        if (dist[i][j] > dist[i][k] + dist[k][j]) {
-                            dist[i][j] = dist[i][k] + dist[k][j];
-                            predecesores[i][j] = predecesores[k][j];
-                        }
-                    }
-                }
-            }
-        }
-
-        // Reconstruir el camino
-        List<Vertice> path = new ArrayList<>();
-        int at = fin;
-        while (at != -1) {
-            path.add(vertices.get(at));
-            at = predecesores[inicio][at];
-        }
-        Collections.reverse(path);
-
-        if (path.get(0) != vertices.get(inicio)) {
-            return Collections.emptyList(); // No hay ruta si el primer nodo no es el inicio
-        }
-        
-        return path;
-    }
 }
-

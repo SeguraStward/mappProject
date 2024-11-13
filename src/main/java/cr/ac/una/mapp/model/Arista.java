@@ -26,7 +26,7 @@ public class Arista {
         this.destino = null;
         this.peso = 0;
         this.time = 0;
-        this.isClosed = true;
+        this.isClosed = false;
         this.longitud = 0;
         this.nivelTrafico = 1;
         
